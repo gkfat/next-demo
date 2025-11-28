@@ -23,8 +23,6 @@ export default defineConfig({
           'vuetify': ['vuetify'],
           // 將 Vue 相關包分離
           'vue-vendor': ['vue', 'vue-router', 'pinia'],
-          // 將 MDI 圖標分離
-          'mdi': ['@mdi/font'],
         }
       }
     },
