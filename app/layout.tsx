@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navigation from "./components/Navigation";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,6 +31,13 @@ export default function RootLayout({
       >
         <Navigation />
         {children}
+        
+        {/* Analytics Script */}
+        <Script
+          src="http://localhost:3001/script.js"
+          data-website-id="e5aa9852-c15a-48f9-8684-de84e0abdeba"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
