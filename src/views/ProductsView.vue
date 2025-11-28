@@ -52,6 +52,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { MOCK_PRODUCTS, PRODUCT_CATEGORIES } from '../data/mockProducts'
 import type { Product } from '../types/product'
+import { trackAddToCart } from '../utils/analytics'
 
 const selectedCategory = ref('')
 const products = ref<Product[]>([])
@@ -70,6 +71,14 @@ const filterProducts = () => {
 }
 
 const addToCart = (product: Product) => {
+  // 追蹤產品加入購物車事件
+  trackAddToCart({
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    category: product.category
+  })
+  
   // TODO: 實作加入購物車功能
   console.log('加入購物車:', product.name)
   alert(`已將 ${product.name} 加入購物車`)
