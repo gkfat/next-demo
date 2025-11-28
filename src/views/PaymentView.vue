@@ -183,16 +183,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { trackEvent } from '../utils/analytics'
 import { PaymentEvents } from '../utils/trackingEvents'
+import { useUTM } from '../composables/useUTM'
 
 const router = useRouter()
+
+// UTM 追蹤
+const { utmInfo, hasUTMParams, isFromPaidCampaign, isFromSocialMedia } = useUTM()
 
 // 響應式資料
 const paymentMethod = ref('credit-card')
 const processing = ref(false)
+
+// 追蹤付費頁面瀏覽
+onMounted(() => {
+  trackEvent('payment-page-view', {
+    has_utm: hasUTMParams.value,
+    is_paid_traffic: isFromPaidCampaign.value,
+    is_social_traffic: isFromSocialMedia.value,
+    order_value: 1250,
+    currency: 'TWD'
+  })
+})
 
 // 計算屬性
 const paymentButtonText = computed(() => {

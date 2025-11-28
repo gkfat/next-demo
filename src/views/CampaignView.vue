@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { trackEvent } from '../utils/analytics'
 import { CampaignEvents } from '../utils/trackingEvents'
+import { useUTM } from '../composables/useUTM'
 
 const router = useRouter()
+
+// UTM 追蹤
+const { utmInfo, hasUTMParams, utmDescription, isFromPaidCampaign, isFromSocialMedia } = useUTM()
 
 // 活動倒數計時
 const eventEndDate = new Date('2024-12-31T23:59:59')
@@ -30,6 +34,23 @@ const updateCountdown = () => {
 // 每秒更新倒數計時
 setInterval(updateCountdown, 1000)
 updateCountdown()
+
+// 追蹤活動頁面瀏覽
+onMounted(() => {
+  trackEvent('campaign-page-view', {
+    campaign_name: '年終大促銷',
+    has_utm: hasUTMParams.value,
+    utm_description: utmDescription.value,
+    is_paid_traffic: isFromPaidCampaign.value,
+    is_social_traffic: isFromSocialMedia.value
+  })
+  
+  // 追蹤倒數計時查看
+  trackEvent(CampaignEvents.CAMPAIGN_COUNTDOWN_VIEW, {
+    timeLeft: timeLeft.value,
+    campaign_name: '年終大促銷'
+  })
+})
 
 // 優惠商品
 const campaignProducts = ref([
@@ -75,7 +96,10 @@ const trackHeroCTA = (buttonType: 'primary' | 'secondary') => {
   trackEvent(CampaignEvents.CAMPAIGN_HERO_CTA, {
     buttonType,
     buttonText: buttonType === 'primary' ? '立即搶購' : '查看所有商品',
-    location: 'hero_section'
+    location: 'hero_section',
+    campaign_name: '年終大促銷',
+    is_paid_traffic: isFromPaidCampaign.value,
+    is_social_traffic: isFromSocialMedia.value
   })
 }
 

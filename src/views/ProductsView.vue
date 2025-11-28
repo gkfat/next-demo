@@ -107,9 +107,13 @@ import { MOCK_PRODUCTS, PRODUCT_CATEGORIES } from '../data/mockProducts'
 import type { Product } from '../types/product'
 import { trackAddToCart, trackEvent } from '../utils/analytics'
 import { ProductEvents } from '../utils/trackingEvents'
+import { useUTM } from '../composables/useUTM'
 
 const selectedCategory = ref('')
 const products = ref<Product[]>([])
+
+// UTM 追蹤
+const { utmInfo, hasUTMParams, isFromPaidCampaign, isFromSocialMedia } = useUTM()
 
 // 轉換分類選項格式供 v-select 使用
 const categoryOptions = computed(() => [
@@ -161,6 +165,14 @@ const addToCart = (product: Product) => {
 onMounted(() => {
   // 模擬 API 載入
   products.value = MOCK_PRODUCTS
+  
+  // 追蹤產品頁面瀏覽
+  trackEvent('products-page-view', {
+    total_products: MOCK_PRODUCTS.length,
+    has_utm: hasUTMParams.value,
+    is_paid_traffic: isFromPaidCampaign.value,
+    is_social_traffic: isFromSocialMedia.value
+  })
 })
 </script>
 

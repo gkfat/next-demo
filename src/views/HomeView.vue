@@ -1,6 +1,20 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { trackEvent } from '../utils/analytics'
 import { HomeEvents } from '../utils/trackingEvents'
+import { useUTM } from '../composables/useUTM'
+
+// UTM 追蹤
+const { utmInfo, hasUTMParams, isFromPaidCampaign, isFromSocialMedia } = useUTM()
+
+// 追蹤首頁瀏覽
+onMounted(() => {
+  trackEvent('home-page-view', {
+    has_utm: hasUTMParams.value,
+    is_paid_traffic: isFromPaidCampaign.value,
+    is_social_traffic: isFromSocialMedia.value
+  })
+})
 
 // Tracking 函式
 const trackHeroCTA = () => {
