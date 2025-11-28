@@ -258,12 +258,14 @@ const processPayment = async () => {
 }
 
 // 追蹤付款方式選擇
-const trackPaymentMethodChange = (newMethod: string) => {
-  trackEvent(PaymentEvents.PAYMENT_METHOD_SELECT, {
-    previousMethod: paymentMethod.value,
-    newMethod,
-    amount: 1250,
-    currency: 'TWD'
-  })
+const trackPaymentMethodChange = (newMethod: string | null) => {
+  if (newMethod) {
+    trackEvent(PaymentEvents.PAYMENT_METHOD_SELECT, {
+      previousMethod: paymentMethod.value,
+      newMethod,
+      amount: 1250,
+      currency: 'TWD'
+    })
+  }
 }
 </script>
