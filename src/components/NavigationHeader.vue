@@ -1,158 +1,335 @@
 <template>
-  <header class="navigation-header">
-    <div class="nav-container">
-      <!-- Logo 區域 -->
-      <div class="nav-brand">
-        <RouterLink to="/home" class="brand-link">
-          <img 
-            alt="Vue logo" 
-            class="brand-logo" 
-            src="@/assets/logo.svg" 
-            width="32" 
-            height="32" 
-          />
-          <span class="brand-name">MyApp</span>
-        </RouterLink>
-      </div>
+  <v-app-bar elevation="2" color="white" height="64">
+    <!-- 手機版選單按鈕 -->
+    <v-app-bar-nav-icon
+      class="d-md-none"
+      @click="toggleMobileMenu"
+    />
+    
+    <!-- Logo 與標題 -->
+    <div class="d-flex align-center flex-shrink-0">
+      <router-link to="/" class="d-flex align-center text-decoration-none" @click="trackLogoClick">
+        <v-img
+          src="@/assets/logo.svg"
+          alt="Logo"
+          max-width="32"
+          class="mr-2"
+        />
+        <div class="text-h5 text-primary font-weight-bold text-no-wrap">
+          MyApp
+        </div>
+      </router-link>
+    </div>
 
-      <!-- 主要導航 -->
-      <nav class="main-nav">
-        <RouterLink to="/home" class="nav-link">
-          <span class="nav-icon">🏠</span>
-          首頁
-        </RouterLink>
-        <RouterLink to="/products" class="nav-link">
-          <span class="nav-icon">📦</span>
-          產品
-        </RouterLink>
-      </nav>
+    <!-- 桌面版導航選單 -->
+    <div class="d-none d-md-flex ml-8">
+      <v-btn
+        to="/"
+        variant="text"
+        class="mx-1"
+        prepend-icon="mdi-home"
+        @click="trackHomeClick"
+      >
+        首頁
+      </v-btn>
+      <v-btn
+        to="/products"
+        variant="text"
+        class="mx-1"
+        prepend-icon="mdi-package-variant"
+        @click="trackProductsClick"
+      >
+        產品
+      </v-btn>
+    </div>
 
-      <!-- 右側功能區 -->
-      <div class="nav-actions">
-        <button class="action-btn search-btn" @click="toggleSearch">
-          <span class="action-icon">🔍</span>
-          搜尋
-        </button>
-        <button class="action-btn cart-btn" @click="openCart">
-          <span class="action-icon">🛒</span>
-          購物車
-          <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
-        </button>
-        <div class="user-menu">
-          <button class="action-btn user-btn" @click="toggleUserMenu">
-            <span class="action-icon">👤</span>
-            會員
-          </button>
-          <div v-if="showUserMenu" class="user-dropdown">
-            <a href="#" class="dropdown-item">個人資料</a>
-            <a href="#" class="dropdown-item">訂單記錄</a>
-            <hr class="dropdown-divider">
-            <a href="#" class="dropdown-item">登出</a>
+    <v-spacer />
+
+    <!-- 搜尋按鈕 -->
+    <v-btn
+      icon
+      @click="toggleSearchWithTracking"
+      class="mr-2 d-none d-sm-flex"
+    >
+      <v-icon>mdi-magnify</v-icon>
+    </v-btn>
+
+    <!-- 購物車按鈕 -->
+    <v-btn
+      icon
+      @click="openCartWithTracking"
+      class="mr-2"
+    >
+      <v-badge
+        v-if="cartCount > 0"
+        :content="cartCount"
+        color="error"
+      >
+        <v-icon>mdi-cart</v-icon>
+      </v-badge>
+      <v-icon v-else>mdi-cart</v-icon>
+    </v-btn>
+
+    <!-- 用戶選單 -->
+    <v-menu>
+      <template v-slot:activator="{ props }">
+        <v-btn
+          icon
+          v-bind="props"
+          class="d-none d-sm-flex"
+        >
+          <v-icon>mdi-account</v-icon>
+        </v-btn>
+      </template>
+      <v-list>
+        <v-list-item>
+          <v-list-item-title>個人資料</v-list-item-title>
+        </v-list-item>
+        <v-list-item>
+          <v-list-item-title>訂單記錄</v-list-item-title>
+        </v-list-item>
+        <v-divider />
+        <v-list-item class="text-error">
+          <v-list-item-title>登出</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-menu>
+  </v-app-bar>
+
+  <!-- 搜尋列展開 -->
+  <v-expand-transition>
+    <v-toolbar
+      v-if="showSearch"
+      color="grey-lighten-4"
+      elevation="0"
+    >
+      <v-container>
+        <v-row align="center" no-gutters>
+          <v-col>
+            <v-text-field
+              v-model="searchQuery"
+              placeholder="搜尋產品..."
+              prepend-inner-icon="mdi-magnify"
+              variant="outlined"
+              density="compact"
+              hide-details
+              @keyup.enter="performSearch"
+            />
+          </v-col>
+          <v-col cols="auto" class="ml-2">
+            <v-btn
+              color="primary"
+              @click="performSearchWithTracking"
+              :disabled="!searchQuery.trim()"
+            >
+              搜尋
+            </v-btn>
+          </v-col>
+          <v-col cols="auto" class="ml-2">
+            <v-btn
+              icon
+              @click="toggleSearch"
+            >
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-toolbar>
+  </v-expand-transition>
+
+  <!-- 手機版導航抽屜 -->
+  <v-navigation-drawer
+    v-model="showMobileMenu"
+    temporary
+    location="left"
+  >
+    <v-list>
+      <v-list-item
+        to="/"
+        prepend-icon="mdi-home"
+        title="首頁"
+        @click="closeMobileMenu"
+      />
+      <v-list-item
+        to="/products"
+        prepend-icon="mdi-package-variant"
+        title="產品"
+        @click="closeMobileMenu"
+      />
+      
+      <v-divider class="my-2" />
+      
+      <v-list-item
+        prepend-icon="mdi-account"
+        title="個人資料"
+        @click="closeMobileMenu"
+      />
+      <v-list-item
+        prepend-icon="mdi-clipboard-list"
+        title="訂單記錄"
+        @click="closeMobileMenu"
+      />
+      <v-list-item
+        prepend-icon="mdi-logout"
+        title="登出"
+        class="text-error"
+        @click="closeMobileMenu"
+      />
+    </v-list>
+  </v-navigation-drawer>
+
+  <!-- 購物車對話框 -->
+  <v-dialog
+    v-model="showCartDialog"
+    max-width="400"
+  >
+    <v-card>
+      <v-card-title class="d-flex justify-space-between align-center">
+        <span>購物車</span>
+        <v-btn
+          icon
+          size="small"
+          @click="showCartDialog = false"
+        >
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </v-card-title>
+      <v-card-text>
+        <div v-if="cartCount === 0" class="text-center py-4">
+          <v-icon size="64" color="grey-lighten-2">mdi-cart-outline</v-icon>
+          <p class="text-grey mt-2">購物車是空的</p>
+        </div>
+        <div v-else>
+          <div class="mb-4">
+            <p class="text-h6 mb-3">購物車內容</p>
+            <v-list>
+              <v-list-item
+                v-for="item in mockCartItems"
+                :key="item.id"
+                class="px-0"
+              >
+                <v-list-item-title>{{ item.name }}</v-list-item-title>
+                <v-list-item-subtitle>
+                  數量: {{ item.quantity }} | NT$ {{ item.price.toLocaleString() }}
+                </v-list-item-subtitle>
+              </v-list-item>
+            </v-list>
+            
+            <v-divider class="my-3" />
+            
+            <div class="d-flex justify-space-between text-h6 font-weight-bold">
+              <span>總計:</span>
+              <span class="text-error">NT$ {{ cartTotal.toLocaleString() }}</span>
+            </div>
           </div>
         </div>
-      </div>
-
-      <!-- 手機版選單按鈕 -->
-      <button 
-        class="mobile-menu-btn"
-        @click="toggleMobileMenu"
-        :class="{ active: showMobileMenu }"
-      >
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-      </button>
-    </div>
-
-    <!-- 搜尋列 -->
-    <div v-if="showSearch" class="search-bar">
-      <div class="search-container">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="搜尋產品..."
-          class="search-input"
-          @keyup.enter="performSearch"
-        />
-        <button class="search-submit" @click="performSearch">搜尋</button>
-        <button class="search-close" @click="toggleSearch">✕</button>
-      </div>
-    </div>
-
-    <!-- 手機版選單 -->
-    <div v-if="showMobileMenu" class="mobile-menu">
-      <nav class="mobile-nav">
-        <RouterLink 
-          to="/home" 
-          class="mobile-nav-link"
-          @click="closeMobileMenu"
+      </v-card-text>
+      
+      <!-- 購物車動作按鈕 -->
+      <v-card-actions v-if="cartCount > 0" class="pa-4">
+        <v-btn
+          variant="outlined"
+          color="secondary"
+          @click="clearCartWithTracking"
         >
-          <span class="nav-icon">🏠</span>
-          首頁
-        </RouterLink>
-        <RouterLink 
-          to="/products" 
-          class="mobile-nav-link"
-          @click="closeMobileMenu"
+          清空購物車
+        </v-btn>
+        <v-spacer />
+        <v-btn
+          color="primary"
+          @click="goToPaymentWithTracking"
         >
-          <span class="nav-icon">📦</span>
-          產品
-        </RouterLink>
-        <hr class="mobile-divider">
-        <a href="#" class="mobile-nav-link">
-          <span class="nav-icon">👤</span>
-          個人資料
-        </a>
-        <a href="#" class="mobile-nav-link">
-          <span class="nav-icon">📋</span>
-          訂單記錄
-        </a>
-      </nav>
-    </div>
-  </header>
+          <v-icon start>mdi-credit-card</v-icon>
+          前往付款
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { trackEvent } from '../utils/analytics'
+import { NavigationEvents, CartEvents } from '../utils/trackingEvents'
 
 const router = useRouter()
 
 // 響應式狀態
 const showSearch = ref(false)
-const showUserMenu = ref(false)
 const showMobileMenu = ref(false)
+const showCartDialog = ref(false)
 const searchQuery = ref('')
 const cartCount = ref(3) // Mock 購物車數量
+
+// Mock 購物車商品資料
+const mockCartItems = ref([
+  { id: 1, name: 'iPhone 15 Pro', quantity: 1, price: 35900 },
+  { id: 2, name: 'AirPods Pro', quantity: 2, price: 7490 },
+  { id: 3, name: '無線充電器', quantity: 1, price: 1200 }
+])
+
+// 計算購物車總金額
+const cartTotal = computed(() => {
+  return mockCartItems.value.reduce((total, item) => {
+    return total + (item.price * item.quantity)
+  }, 0)
+})
+
+// Tracking 函式
+const trackLogoClick = () => {
+  trackEvent(NavigationEvents.LOGO_CLICK)
+}
+
+const trackHomeClick = () => {
+  trackEvent(NavigationEvents.HOME_CLICK)
+}
+
+const trackProductsClick = () => {
+  trackEvent(NavigationEvents.PRODUCTS_CLICK)
+}
 
 // 搜尋功能
 const toggleSearch = () => {
   showSearch.value = !showSearch.value
-  if (showSearch.value) {
-    showUserMenu.value = false
+  if (!showSearch.value) {
+    searchQuery.value = ''
   }
+}
+
+const toggleSearchWithTracking = () => {
+  trackEvent(NavigationEvents.SEARCH_OPEN)
+  toggleSearch()
 }
 
 const performSearch = () => {
   if (searchQuery.value.trim()) {
     console.log('搜尋:', searchQuery.value)
-    // TODO: 實作搜尋邏輯
     router.push(`/products?search=${encodeURIComponent(searchQuery.value)}`)
+    showSearch.value = false
+    searchQuery.value = ''
   }
+}
+
+const performSearchWithTracking = () => {
+  trackEvent(NavigationEvents.SEARCH_PERFORM, {
+    searchQuery: searchQuery.value.trim()
+  })
+  performSearch()
 }
 
 // 購物車功能
 const openCart = () => {
-  console.log('打開購物車')
-  // TODO: 實作購物車邏輯
+  showCartDialog.value = true
 }
 
-// 使用者選單
-const toggleUserMenu = () => {
-  showUserMenu.value = !showUserMenu.value
-  if (showUserMenu.value) {
-    showSearch.value = false
-  }
+const openCartWithTracking = () => {
+  trackEvent(NavigationEvents.CART_OPEN, {
+    cartItemCount: cartCount.value,
+    cartTotal: cartTotal.value
+  })
+  openCart()
 }
 
 // 手機版選單
@@ -164,330 +341,33 @@ const closeMobileMenu = () => {
   showMobileMenu.value = false
 }
 
-// 點擊外部關閉選單
-const handleClickOutside = (event: Event) => {
-  const target = event.target as Element
-  if (!target.closest('.user-menu')) {
-    showUserMenu.value = false
-  }
-  if (!target.closest('.nav-container') && !target.closest('.mobile-menu')) {
-    showMobileMenu.value = false
-  }
+// 購物車功能
+const clearCart = () => {
+  mockCartItems.value = []
+  cartCount.value = 0
+  showCartDialog.value = false
 }
 
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
+const clearCartWithTracking = () => {
+  trackEvent(CartEvents.CART_CLEAR, {
+    previousItemCount: cartCount.value,
+    previousTotal: cartTotal.value
+  })
+  clearCart()
+}
 
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
+const goToPayment = () => {
+  showCartDialog.value = false
+  router.push('/payment')
+}
+
+const goToPaymentWithTracking = () => {
+  trackEvent(CartEvents.CART_CHECKOUT, {
+    cartItemCount: cartCount.value,
+    cartTotal: cartTotal.value,
+    items: mockCartItems.value
+  })
+  goToPayment()
+}
 </script>
 
-<style scoped>
-.navigation-header {
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;
-}
-
-/* Logo 品牌區域 */
-.nav-brand .brand-link {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  color: #2c3e50;
-}
-
-.brand-logo {
-  margin-right: 8px;
-}
-
-.brand-name {
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-/* 主要導航 */
-.main-nav {
-  display: flex;
-  gap: 2rem;
-}
-
-.nav-link {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  text-decoration: none;
-  color: #6b7280;
-  border-radius: 6px;
-  transition: all 0.2s;
-  font-weight: 500;
-}
-
-.nav-link:hover {
-  color: #42b883;
-  background-color: #f0f9f4;
-}
-
-.nav-link.router-link-active {
-  color: #42b883;
-  background-color: #ecfdf5;
-}
-
-.nav-icon {
-  margin-right: 6px;
-  font-size: 1.1rem;
-}
-
-/* 右側功能區 */
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  background: none;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.875rem;
-  position: relative;
-}
-
-.action-btn:hover {
-  border-color: #42b883;
-  color: #42b883;
-}
-
-.action-icon {
-  margin-right: 4px;
-}
-
-/* 購物車徽章 */
-.cart-badge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: #ef4444;
-  color: white;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-/* 使用者下拉選單 */
-.user-menu {
-  position: relative;
-}
-
-.user-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 8px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  min-width: 160px;
-  overflow: hidden;
-}
-
-.dropdown-item {
-  display: block;
-  padding: 0.75rem 1rem;
-  color: #374151;
-  text-decoration: none;
-  transition: background-color 0.2s;
-}
-
-.dropdown-item:hover {
-  background-color: #f9fafb;
-}
-
-.dropdown-divider {
-  margin: 0;
-  border: none;
-  border-top: 1px solid #e5e7eb;
-}
-
-/* 搜尋列 */
-.search-bar {
-  background: #f9fafb;
-  border-top: 1px solid #e5e7eb;
-  padding: 1rem;
-}
-
-.search-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  gap: 0.5rem;
-}
-
-.search-input {
-  flex: 1;
-  padding: 0.5rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 1rem;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #42b883;
-}
-
-.search-submit,
-.search-close {
-  padding: 0.5rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: white;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.search-submit:hover {
-  border-color: #42b883;
-  color: #42b883;
-}
-
-.search-close {
-  background: #f3f4f6;
-}
-
-.search-close:hover {
-  background: #e5e7eb;
-}
-
-/* 手機版選單按鈕 */
-.mobile-menu-btn {
-  display: none;
-  flex-direction: column;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-}
-
-.hamburger-line {
-  width: 20px;
-  height: 2px;
-  background: #6b7280;
-  margin: 2px 0;
-  transition: 0.3s;
-}
-
-.mobile-menu-btn.active .hamburger-line:nth-child(1) {
-  transform: rotate(-45deg) translate(-4px, 4px);
-}
-
-.mobile-menu-btn.active .hamburger-line:nth-child(2) {
-  opacity: 0;
-}
-
-.mobile-menu-btn.active .hamburger-line:nth-child(3) {
-  transform: rotate(45deg) translate(-4px, -4px);
-}
-
-/* 手機版選單 */
-.mobile-menu {
-  background: white;
-  border-top: 1px solid #e5e7eb;
-  padding: 1rem;
-}
-
-.mobile-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.mobile-nav-link {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  color: #374151;
-  text-decoration: none;
-  border-radius: 6px;
-  transition: background-color 0.2s;
-}
-
-.mobile-nav-link:hover,
-.mobile-nav-link.router-link-active {
-  background-color: #f0f9f4;
-  color: #42b883;
-}
-
-.mobile-divider {
-  margin: 0.5rem 0;
-  border: none;
-  border-top: 1px solid #e5e7eb;
-}
-
-/* 響應式設計 */
-@media (max-width: 768px) {
-  .nav-container {
-    padding: 0 1rem;
-  }
-
-  .main-nav,
-  .nav-actions .search-btn,
-  .nav-actions .user-menu {
-    display: none;
-  }
-
-  .mobile-menu-btn {
-    display: flex;
-  }
-
-  .nav-actions {
-    gap: 0.25rem;
-  }
-
-  .action-btn {
-    padding: 0.5rem;
-    border: none;
-  }
-
-  .action-btn .action-icon {
-    margin-right: 0;
-  }
-
-  .action-btn:not(.cart-btn) span:not(.action-icon) {
-    display: none;
-  }
-}
-
-@media (max-width: 640px) {
-  .brand-name {
-    display: none;
-  }
-}
-</style>

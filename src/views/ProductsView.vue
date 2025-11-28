@@ -1,62 +1,124 @@
 <template>
-  <div class="products-container">
-    <div class="products-header">
-      <h1>產品列表</h1>
-      <div class="filter-section">
-        <select v-model="selectedCategory" @change="filterProducts">
-          <option value="">所有分類</option>
-          <option v-for="category in categories" :key="category.id" :value="category.id">
-            {{ category.name }}
-          </option>
-        </select>
-      </div>
-    </div>
+  <v-container>
+    <!-- 頁面標題與篩選器 -->
+    <v-row class="mb-6">
+      <v-col cols="12" md="8">
+        <h1 class="text-h3 text-primary font-weight-bold">產品列表</h1>
+      </v-col>
+      <v-col cols="12" md="4">
+        <v-select
+          v-model="selectedCategory"
+          :items="categoryOptions"
+          label="選擇分類"
+          variant="outlined"
+          density="compact"
+          @update:model-value="filterProducts"
+        />
+      </v-col>
+    </v-row>
 
-    <div class="products-grid">
-      <div 
-        v-for="product in filteredProducts" 
-        :key="product.id" 
-        class="product-card"
-        :class="{ 'out-of-stock': !product.inStock }"
+    <!-- 產品網格 -->
+    <v-row>
+      <v-col
+        v-for="product in filteredProducts"
+        :key="product.id"
+        cols="12"
+        sm="6"
+        md="4"
+        lg="3"
       >
-        <div class="product-image">
-          <img :src="product.image" :alt="product.name" />
-          <div v-if="!product.inStock" class="stock-overlay">缺貨</div>
-        </div>
-        
-        <div class="product-info">
-          <h3 class="product-name">{{ product.name }}</h3>
-          <p class="product-description">{{ product.description }}</p>
+        <v-card
+          :class="{ 'opacity-75': !product.inStock }"
+          elevation="2"
+          hover
+        >
+          <!-- 產品圖片 -->
+          <div class="position-relative">
+            <v-img
+              :src="product.image"
+              :alt="product.name"
+              height="200"
+              cover
+            />
+            <v-overlay
+              v-if="!product.inStock"
+              contained
+              class="d-flex align-center justify-center"
+            >
+              <v-chip
+                color="error"
+                variant="elevated"
+                size="large"
+              >
+                缺貨
+              </v-chip>
+            </v-overlay>
+          </div>
+
+          <!-- 產品標題 -->
+          <v-card-title class="pb-2">
+            {{ product.name }}
+          </v-card-title>
           
-          <div class="product-footer">
-            <span class="product-price">NT$ {{ product.price.toLocaleString() }}</span>
-            <button 
-              class="add-to-cart-btn" 
+          <!-- 產品描述 -->
+          <v-card-subtitle class="pb-4">
+            {{ product.description }}
+          </v-card-subtitle>
+          
+          <!-- 價格與按鈕 -->
+          <v-card-actions class="px-4 pb-4">
+            <span class="text-h6 text-error font-weight-bold">
+              NT$ {{ product.price.toLocaleString() }}
+            </span>
+            <v-spacer />
+            <v-btn
               :disabled="!product.inStock"
+              color="primary"
+              variant="elevated"
+              size="small"
               @click="addToCart(product)"
             >
               {{ product.inStock ? '加入購物車' : '缺貨' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-col>
+    </v-row>
 
-    <div v-if="filteredProducts.length === 0" class="empty-state">
-      <p>找不到符合條件的產品</p>
-    </div>
-  </div>
+    <!-- 空狀態 -->
+    <v-row v-if="filteredProducts.length === 0">
+      <v-col cols="12">
+        <v-card class="text-center py-8">
+          <v-icon size="64" color="grey-lighten-2" class="mb-4">
+            mdi-package-variant-remove
+          </v-icon>
+          <v-card-title class="text-grey">
+            找不到符合條件的產品
+          </v-card-title>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { MOCK_PRODUCTS, PRODUCT_CATEGORIES } from '../data/mockProducts'
 import type { Product } from '../types/product'
-import { trackAddToCart } from '../utils/analytics'
+import { trackAddToCart, trackEvent } from '../utils/analytics'
+import { ProductEvents } from '../utils/trackingEvents'
 
 const selectedCategory = ref('')
 const products = ref<Product[]>([])
-const categories = ref(PRODUCT_CATEGORIES)
+
+// 轉換分類選項格式供 v-select 使用
+const categoryOptions = computed(() => [
+  { title: '所有分類', value: '' },
+  ...PRODUCT_CATEGORIES.map(category => ({
+    title: category.name,
+    value: category.id
+  }))
+])
 
 const filteredProducts = computed(() => {
   if (!selectedCategory.value) {
@@ -66,11 +128,23 @@ const filteredProducts = computed(() => {
 })
 
 const filterProducts = () => {
-  // 這裡可以加入更複雜的篩選邏輯
+  // 追蹤篩選事件
+  trackEvent(ProductEvents.PRODUCT_FILTER, {
+    selectedCategory: selectedCategory.value,
+    categoryName: PRODUCT_CATEGORIES.find(cat => cat.id === selectedCategory.value)?.name || '所有分類'
+  })
   console.log('篩選分類:', selectedCategory.value)
 }
 
 const addToCart = (product: Product) => {
+  // 追蹤產品瀏覽事件
+  trackEvent(ProductEvents.PRODUCT_VIEW, {
+    productId: product.id,
+    productName: product.name,
+    productPrice: product.price,
+    productCategory: product.category
+  })
+
   // 追蹤產品加入購物車事件
   trackAddToCart({
     id: product.id,
@@ -90,159 +164,3 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.products-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.products-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.products-header h1 {
-  color: #2c3e50;
-  margin: 0;
-}
-
-.filter-section select {
-  padding: 0.5rem 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: white;
-  min-width: 150px;
-}
-
-.products-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.product-card {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
-  background: white;
-}
-
-.product-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.product-card.out-of-stock {
-  opacity: 0.7;
-}
-
-.product-image {
-  position: relative;
-  height: 200px;
-  background: #f5f5f5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.product-image img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: cover;
-}
-
-.stock-overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(220, 53, 69, 0.9);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: bold;
-}
-
-.product-info {
-  padding: 1rem;
-}
-
-.product-name {
-  margin: 0 0 0.5rem 0;
-  color: #2c3e50;
-  font-size: 1.1rem;
-}
-
-.product-description {
-  color: #666;
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
-  line-height: 1.4;
-}
-
-.product-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.product-price {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #e74c3c;
-}
-
-.add-to-cart-btn {
-  background: #42b883;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.add-to-cart-btn:hover:not(:disabled) {
-  background: #369870;
-}
-
-.add-to-cart-btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 3rem;
-  color: #666;
-}
-
-@media (max-width: 768px) {
-  .products-container {
-    padding: 1rem;
-  }
-  
-  .products-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .products-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .product-footer {
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: stretch;
-  }
-}
-</style>

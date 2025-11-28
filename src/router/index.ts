@@ -16,10 +16,18 @@ const router = createRouter({
     {
       path: '/products',
       name: 'products',
-      // route level code-splitting
-      // this generates a separate chunk (Products.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
       component: () => import('../views/ProductsView.vue'),
+    },
+    {
+      path: '/payment',
+      name: 'payment',
+      component: () => import('../views/PaymentView.vue'),
+    },
+    {
+      path: '/campaign',
+      name: 'campaign',
+      // 活動頁面 - 預設讓人從付費流量 URL 進來，不會在導覽列顯示
+      component: () => import('../views/CampaignView.vue'),
     },
   ],
 })

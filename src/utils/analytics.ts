@@ -25,6 +25,33 @@ export type ProductTrackingData = {
 }
 
 /**
+ * 通用事件追蹤函式
+ * @param eventName 事件名稱
+ * @param customData 自訂資料
+ */
+export function trackEvent(
+  eventName: string,
+  customData?: Record<string, any>
+) {
+  if (typeof window !== 'undefined' && window.umami?.track) {
+    window.umami.track((props) => ({
+      ...props, // 保持預設追蹤屬性
+      name: eventName,
+      data: {
+        ...customData,
+        timestamp: new Date().toISOString(),
+      },
+    }))
+  } else {
+    // 開發環境或 umami 未載入時的 fallback
+    console.log('🔍 Analytics Event:', {
+      name: eventName,
+      data: customData
+    })
+  }
+}
+
+/**
  * 追蹤產品相關事件
  * @param eventName 事件名稱
  * @param productData 產品資料
@@ -35,23 +62,10 @@ export function trackProductEvent(
   productData: ProductTrackingData,
   customData?: Record<string, any>
 ) {
-  if (typeof window !== 'undefined' && window.umami?.track) {
-    window.umami.track((props) => ({
-      ...props, // 保持預設追蹤屬性
-      name: eventName,
-      data: {
-        ...productData,
-        ...customData,
-        timestamp: new Date().toISOString(),
-      },
-    }))
-  } else {
-    // 開發環境或 umami 未載入時的 fallback
-    console.log('🔍 Analytics Event:', {
-      name: eventName,
-      data: { ...productData, ...customData }
-    })
-  }
+  trackEvent(eventName, {
+    ...productData,
+    ...customData,
+  })
 }
 
 /**
