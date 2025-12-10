@@ -111,6 +111,60 @@ const trackFeatureView = (featureName: string) => {
       </v-row>
     </v-container>
 
+    <!-- Analytics Dashboard Section -->
+    <v-container class="py-8">
+      <v-row>
+        <v-col cols="12" class="text-center mb-6">
+          <h2 class="text-h3 text-secondary font-weight-bold">網站分析儀表板</h2>
+          <p class="text-h6 text-grey-darken-1 mt-2">
+            即時查看網站訪問統計與用戶行為分析
+          </p>
+        </v-col>
+      </v-row>
+
+      <v-row justify="center">
+        <v-col cols="12" lg="10" xl="8">
+          <v-card elevation="3" class="overflow-hidden">
+            <v-card-title class="bg-primary text-white d-flex align-center">
+              <v-icon start>mdi-chart-line</v-icon>
+              Umami Analytics Dashboard
+            </v-card-title>
+            <v-card-text class="pa-0">
+              <iframe
+                src="https://fork-umami-server.onrender.com/"
+                width="100%"
+                height="600"
+                frameborder="0"
+                title="Analytics Dashboard"
+                class="analytics-iframe"
+              ></iframe>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
+
   </div>
 </template>
+
+<style scoped>
+.analytics-iframe {
+  border: none;
+  display: block;
+  min-height: 600px;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .analytics-iframe {
+    min-height: 500px;
+  }
+}
+
+@media (max-width: 480px) {
+  .analytics-iframe {
+    min-height: 400px;
+  }
+}
+</style>
 
